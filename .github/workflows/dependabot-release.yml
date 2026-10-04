@@ -1,0 +1,58 @@
+name: Dependabot Build and Release
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: write # Grants permission to create releases and upload assets
+
+jobs:
+  build-and-release:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: windows-latest # Required for compiling legacy .NET Framework (WinForms)
+
+    steps:
+      # 1. Check out the code from the Dependabot branch
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      # 2. Add MSBuild to the runner's path
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      # 3. Add NuGet to download external packages
+      - name: Setup NuGet
+        uses: nuget/setup-nuget@v1
+        with:
+          nuget-version: 'latest'
+
+      # 4. Restore NuGet packages for the Visual Studio Solution
+      - name: Restore NuGet Packages
+        run: nuget restore ChilledWindows.sln
+
+      # 5. Build the application in Release configuration
+      - name: Build Application
+        run: |
+          msbuild ChilledWindows.sln /p:Configuration=Release /p:Platform="Any CPU"
+
+      # 6. Generate a unique tag version using the run ID
+      - name: Generate Release Tag
+        id: tag
+        shell: bash
+        run: echo "version=v4.8.dependabot-${{ github.run_id }}" >> $GITHUB_OUTPUT
+
+      # 7. Publish the raw .exe directly to the GitHub Releases page
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.version }}
+          name: "Dependabot Auto-Build: ${{ steps.tag.outputs.version }}"
+          body: |
+            Automated WinForms v4.8 build generated from Dependabot updates.
+            Review the dependency updates in PR #${{ github.event.pull_request.number }}.
+          draft: false
+          prerelease: true # Keeps it flagged as a pre-release
+          files: ChilledWindows/bin/Release/ChilledWindows.exe
