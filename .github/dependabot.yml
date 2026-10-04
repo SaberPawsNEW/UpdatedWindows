@@ -13,3 +13,5 @@
           draft: false
           prerelease: false # Changed to false so it is marked as a full, stable release!
           files: ChilledWindows/bin/Release/ChilledWindows.exe
+
+# Last manual check: 10/04/2026 22:32:04
