@@ -1,0 +1,13 @@
+version: 2
+updates:
+  # 1. Monitor GitHub Actions updates
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # 2. Monitor NuGet dependencies for ChilledWindows
+  - package-ecosystem: "nuget"
+    directory: "/" # Looks for your .sln or .csproj in the root and subdirectories
+    schedule:
+      interval: "weekly"
