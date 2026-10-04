@@ -1,0 +1,71 @@
+name: Manual Build, Release & Dependabot Trigger
+
+on:
+  workflow_dispatch: # Allows you to click "Run workflow" manually from GitHub Actions UI
+
+permissions:
+  contents: write # Grants permission to create releases and push tags
+
+jobs:
+  manual-build-and-release:
+    runs-on: windows-latest # Compiles legacy WinForms .NET Framework 4.8 safely
+
+    steps:
+      # 1. Check out the default production branch
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Add MSBuild to the runner's path
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      # 3. Add NuGet to download external packages
+      - name: Setup NuGet
+        uses: nuget/setup-nuget@v1
+        with:
+          nuget-version: 'latest'
+
+      # 4. Restore NuGet packages for the Visual Studio Solution
+      - name: Restore NuGet Packages
+        run: nuget restore ChilledWindows.sln
+
+      # 5. Build the application in Release configuration
+      - name: Build Application
+        run: |
+          msbuild ChilledWindows.sln /p:Configuration=Release /p:Platform="Any CPU"
+
+      # 6. Generate a unique tag version using the run ID
+      - name: Generate Release Tag
+        id: tag
+        shell: bash
+        run: echo "version=v4.8.manual-${{ github.run_id }}" >> $GITHUB_OUTPUT
+
+      # 7. Publish the raw .exe directly to the GitHub Releases page
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.version }}
+          name: "Manual Release: ${{ steps.tag.outputs.version }}"
+          body: |
+            Manually generated WinForms v4.8 application build.
+          draft: false
+          prerelease: false # This marks it as a full, stable release instead of a pre-release
+          files: ChilledWindows/bin/Release/ChilledWindows.exe
+
+      # 8. Force Dependabot to check for updates immediately
+      # Modifying file metadata forces an evaluation job instantly
+      - name: Poke Dependabot for Updates
+        shell: pwsh
+        run: |
+          $file = ".github/dependabot.yml"
+          if (Test-Path $file) {
+              Add-Content -Path $file -Value "`n# Last manual check: $(Get-Date)"
+              git config --global user.name "github-actions[bot]"
+              git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git add $file
+              git commit -m "chore: force dependabot check via manual update"
+              git push origin HEAD:${{ github.ref_name }}
+              Write-Host "Successfully nudged Dependabot into searching for new updates!"
+          } else {
+              Write-Warning "dependabot.yml file not found in root path."
+          }
