@@ -1,11 +1,12 @@
-name: Dependabot Build and Release
+name: Dependabot Build, Release & Auto-Merge
 
 on:
   pull_request:
     types: [opened, synchronize]
 
 permissions:
-  contents: write # Grants permission to create releases and upload assets
+  contents: write      # Required to create releases, push tags, and merge the PR
+  pull-requests: write # Required to approve and comment on the PR
 
 jobs:
   build-and-release:
@@ -15,17 +16,17 @@ jobs:
     steps:
       # 1. Check out the code from the Dependabot branch
       - name: Checkout Code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref }}
 
       # 2. Add MSBuild to the runner's path
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v3
+        uses: microsoft/setup-msbuild@v2
 
       # 3. Add NuGet to download external packages
       - name: Setup NuGet
-        uses: nuget/setup-nuget@v4
+        uses: nuget/setup-nuget@v1
         with:
           nuget-version: 'latest'
 
@@ -46,13 +47,30 @@ jobs:
 
       # 7. Publish the raw .exe directly to the GitHub Releases page
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.version }}
           name: "Dependabot Auto-Build: ${{ steps.tag.outputs.version }}"
           body: |
             Automated WinForms v4.8 build generated from Dependabot updates.
+            
+            **Authors / Developers:** GAMELASTER and Catten Type Guy
+            
             Review the dependency updates in PR #${{ github.event.pull_request.number }}.
           draft: false
           prerelease: true # Keeps it flagged as a pre-release
           files: ChilledWindows/bin/Release/ChilledWindows.exe
+
+      # 8. Fetch Dependabot metadata to verify the upgrade path is safe
+      - name: Fetch Dependabot Metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      # 9. Automatically approve and merge the Dependabot PR
+      - name: Auto-Merge Dependabot PR
+        uses: ahmadnassri/action-dependabot-auto-merge@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          command: "squash and merge" # Merges all changes cleanly into your main branch
