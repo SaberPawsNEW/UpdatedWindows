@@ -13,15 +13,15 @@ jobs:
     steps:
       # 1. Check out the default production branch
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # 2. Add MSBuild to the runner's path
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v3
 
       # 3. Add NuGet to download external packages
       - name: Setup NuGet
-        uses: nuget/setup-nuget@v1
+        uses: nuget/setup-nuget@v4
         with:
           nuget-version: 'latest'
 
@@ -42,7 +42,7 @@ jobs:
 
       # 7. Publish the raw .exe directly to the GitHub Releases page
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.tag.outputs.version }}
           name: "Manual Release: ${{ steps.tag.outputs.version }}"
