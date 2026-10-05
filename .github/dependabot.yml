@@ -1,17 +1,13 @@
-      # 7. Publish the raw .exe directly to the GitHub Releases page
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.tag.outputs.version }}
-          name: "Dependabot Auto-Build: ${{ steps.tag.outputs.version }}"
-          body: |
-            Automated WinForms v4.8 build generated from Dependabot updates.
-            
-            **Authors / Developers:** GAMELASTER and Catten Type Guy
-            
-            Review the dependency updates in PR #${{ github.event.pull_request.number }}.
-          draft: false
-          prerelease: false # Changed to false so it is marked as a full, stable release!
-          files: ChilledWindows/bin/Release/ChilledWindows.exe
+version: 2
+updates:
+  # 1. Monitor GitHub Actions updates
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
 
-# Last manual check: 10/04/2026 22:32:04
+  # 2. Monitor NuGet dependencies for ChilledWindows
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
