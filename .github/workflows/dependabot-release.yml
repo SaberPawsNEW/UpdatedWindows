@@ -7,7 +7,6 @@ on:
 permissions:
   contents: write      # Required to create releases, push tags, and merge the PR
   pull-requests: write # Required to approve and comment on the PR
-  workflows: write     # REQUIRED to allow auto-merging updates to GitHub Action files safely
 
 jobs:
   build-and-release:
