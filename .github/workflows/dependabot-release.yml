@@ -58,19 +58,13 @@ jobs:
             
             Review the dependency updates in PR #${{ github.event.pull_request.number }}.
           draft: false
-          prerelease: true # Keeps it flagged as a pre-release
+          prerelease: false # Correctly marks it as a full, stable release
           files: ChilledWindows/bin/Release/ChilledWindows.exe
 
-      # 8. Fetch Dependabot metadata to verify the upgrade path is safe
-      - name: Fetch Dependabot Metadata
-        id: metadata
-        uses: dependabot/fetch-metadata@v2
-        with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-
-      # 9. Automatically approve and merge the Dependabot PR
-      - name: Auto-Merge Dependabot PR
-        uses: ahmadnassri/action-dependabot-auto-merge@v2
-        with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-          command: "squash and merge" # Merges all changes cleanly into your main branch
+      # 8. Use the native GitHub CLI to approve and squash-merge the PR
+      - name: Auto-Approve and Merge PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr review ${{ github.event.pull_request.number }} --approve
+          gh pr merge ${{ github.event.pull_request.number }} --squash --auto
