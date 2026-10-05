@@ -16,7 +16,7 @@ jobs:
     steps:
       # 1. Check out the code from the Dependabot branch
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.ref }}
 
