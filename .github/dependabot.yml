@@ -1,0 +1,7 @@
+version: 2
+updates:
+  # Monitor ONLY NuGet dependencies for ChilledWindows (Actions updates are blocked)
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
